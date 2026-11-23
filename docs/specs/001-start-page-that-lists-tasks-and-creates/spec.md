@@ -1,7 +1,7 @@
 ---
 spec_id: 001-start-page-that-lists-tasks-and-creates
 title: Start page that lists tasks and creates them through taskboard28-api
-status: approved
+status: building
 priority: P1
 shape: web-nextjs
 parent: ika100-demo/taskboard28-gitops:001-tasks-in-postgres-visible-and-creatable
@@ -183,3 +183,4 @@ TASKBOARD28_API_URL (set by the gitops entry; no NEXT_PUBLIC_ variable). No sign
 
 - 2026-11-23 created from the system plan, with its criteria (spec 147)
 - 2026-11-23 approved
+- 2026-11-23 building
