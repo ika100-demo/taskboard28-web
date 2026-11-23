@@ -11,7 +11,7 @@ import { load } from "../helpers/load";
 const text = (id: string) => document.getElementById(id)?.textContent ?? "";
 
 export const adapter: ContractAdapter = {
-  base: () => ({ title: "valid title", due_date: null }),
+  base: () => ({ title: "Buy milk", due_date: null }),
   validate: async (_endpoint, body) => {
     const { validateTask } = await load<typeof import("@/lib/tasks/validate")>("@/lib/tasks/validate");
     return validateTask(body) as Record<string, string>;
