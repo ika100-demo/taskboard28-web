@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { load } from "./helpers/load";
@@ -16,7 +16,9 @@ afterEach(() => {
 async function renderPage() {
   const page = await load<typeof import("@/app/page")>("@/app/page");
   const Page = page.default;
-  render(<Page />);
+  await act(async () => {
+    render(<Page />);
+  });
   return { page, main: screen.getByRole("main") };
 }
 
