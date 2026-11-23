@@ -1,7 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import HomePage from "@/app/page";
+
+vi.mock("@/lib/tasks/api", () => ({ listTasks: vi.fn(async () => ({ ok: true, tasks: [] })) }));
+vi.mock("@/app/_actions/create-task", () => ({ createTaskAction: vi.fn() }));
 
 describe("HomePage", () => {
   it("owns the main landmark the skip link targets", () => {
@@ -9,35 +12,21 @@ describe("HomePage", () => {
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
   });
 
-  it("renders the project heading", () => {
+  it("renders a single Tasks heading", () => {
     render(<HomePage />);
-    expect(screen.getByRole("heading", { level: 1, name: "taskboard28-web" })).toBeInTheDocument();
+    const h1s = screen.getAllByRole("heading", { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0]).toHaveTextContent("Tasks");
   });
 
-  it("offers the two primary actions", () => {
+  it("orders the sections New task then All tasks", () => {
     render(<HomePage />);
-    expect(screen.getByRole("link", { name: "Get started" })).toHaveAttribute("href", "#get-started");
-    expect(screen.getByRole("link", { name: "Check health" })).toHaveAttribute("href", "/api/health");
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["New task", "All tasks"]);
   });
 
-  it("lists what is included as accessible cards", () => {
+  it("shows the new task form", () => {
     render(<HomePage />);
-    const features = screen.getByRole("region", { name: "What's included" });
-    const items = within(features).getAllByRole("listitem");
-    expect(items.length).toBeGreaterThanOrEqual(5);
-    expect(within(features).getByRole("heading", { level: 3, name: "Health and readiness" })).toBeInTheDocument();
-    expect(within(features).getByRole("heading", { level: 3, name: "Metrics and tracing" })).toBeInTheDocument();
-  });
-
-  it("explains how to get started in order", () => {
-    render(<HomePage />);
-    const steps = within(screen.getByRole("region", { name: "Get started" })).getAllByRole("listitem");
-    expect(steps).toHaveLength(3);
-  });
-
-  it("keeps a single level-1 heading and ordered sections", () => {
-    render(<HomePage />);
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["What's included", "Get started"]);
+    expect(screen.getByLabelText("Title")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add task" })).toBeInTheDocument();
   });
 });

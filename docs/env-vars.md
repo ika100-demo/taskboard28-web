@@ -16,6 +16,12 @@ Configuration is read exclusively from environment variables. Defaults below are
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | _(unset — tracing disabled)_ | OTLP endpoint; when set, `instrumentation.ts` enables OpenTelemetry tracing. |
 | `OTEL_SERVICE_NAME` | `taskboard28-web` | Service name reported in traces. |
 
+## taskboard28-api
+
+| Variable | Default | Description |
+|---|---|---|
+| `TASKBOARD28_API_URL` | _(unset)_ | Base URL of taskboard28-api, read on the server per call (a trailing `/` is ignored). Set by the gitops entry (dev: `http://taskboard28-api`). When unset the page shows its error texts and logs a `warn` with `reason: "config"`. |
+
 ## Public (browser-exposed)
 
 Variables prefixed `NEXT_PUBLIC_` are inlined into the client bundle at build time. Never put secrets in them.
