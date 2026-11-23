@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 
 test.skip(!process.env.SMOKE_BASE_URL, "SMOKE_BASE_URL not set");
 
-// Read-only: the start page loads with its form and shows a list, the empty text or the load error.
+// Read-only smoke check only: the page loads with its form and a task area (list, empty text or load error);
+// it does not check which of the three, because staging and prod data are not ours.
 test("AC-001.2 the start page shows the create form and the task area @smoke", async ({ page }) => {
   await page.goto("/");
   const main = page.getByRole("main");

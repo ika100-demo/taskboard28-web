@@ -1,8 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { load } from "./helpers/load";
-import { json,postBody, posts, stubFetch, TASK_A } from "./helpers/tasks";
+import { json,postBody, posts, stubFetch, TASK_A, TASK_B } from "./helpers/tasks";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
@@ -48,6 +48,36 @@ describe("TaskForm (app/_components/task-form)", () => {
     expect(await screen.findByText("Task added.")).toBeInTheDocument();
   });
 
+  it("AC-001.3 after a 201 the refreshed list shows the new task last, with its title and due date or 'No due date'", async () => {
+    const stored = [TASK_A];
+    stubFetch((_url, init) => {
+      if (init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { title: string; due_date: string | null };
+        const task = { id: `n${stored.length}`, created_at: "2026-11-23T11:00:00Z", ...body };
+        stored.push(task);
+        return json(201, task);
+      }
+      return json(200, stored);
+    });
+    const { listTasks } = await load<typeof import("@/lib/tasks/api")>("@/lib/tasks/api");
+    const { TaskListView } = await load<typeof import("@/app/_components/task-list")>("@/app/_components/task-list");
+    for (const [due, shown] of [
+      ["2026-12-24", "2026-12-24"],
+      ["", "No due date"],
+    ]) {
+      const f = await renderForm();
+      fill(f, "Buy milk", due);
+      fireEvent.click(f.submit);
+      await waitFor(() => expect(f.title.value).toBe(""));
+      const view = render(<TaskListView result={await listTasks()} />);
+      const items = within(view.container).getAllByRole("listitem");
+      expect(items[0]).toHaveTextContent("A");
+      expect(items[items.length - 1]).toHaveTextContent("Buy milk");
+      expect(items[items.length - 1]).toHaveTextContent(shown);
+      cleanup();
+    }
+  });
+
   it("AC-001.3 sends due_date null when the date is left empty", async () => {
     const fetchMock = stubFetch(() => json(201, TASK_A));
     const f = await renderForm();
@@ -59,16 +89,19 @@ describe("TaskForm (app/_components/task-form)", () => {
 
   it("AC-001.4 shows 'Title is required' for empty and whitespace titles, keeps values, sends nothing", async () => {
     const fetchMock = stubFetch(() => json(201, TASK_A));
-    const f = await renderForm();
-    fill(f, "   ", "2026-12-24");
-    fireEvent.click(f.submit);
-    expect(await screen.findByText("Title is required")).toBeInTheDocument();
-    expect(f.title.value).toBe("   ");
-    expect(f.due.value).toBe("2026-12-24");
-    expect(f.title).toHaveAttribute("aria-invalid", "true");
-    fill(f, "");
-    fireEvent.click(f.submit);
-    expect(await screen.findByText("Title is required")).toBeInTheDocument();
+    // A fresh render per case, so that a message left over from the first cannot satisfy the second.
+    for (const value of ["   ", ""]) {
+      const f = await renderForm();
+      fill(f, value, "2026-12-24");
+      fireEvent.click(f.submit);
+      const msg = await screen.findByText("Title is required");
+      expect(msg).toHaveAttribute("id", "task-title-error");
+      expect(f.title).toHaveAttribute("aria-describedby", "task-title-error");
+      expect(f.title).toHaveAttribute("aria-invalid", "true");
+      expect(f.title.value).toBe(value);
+      expect(f.due.value).toBe("2026-12-24");
+      cleanup();
+    }
     expect(posts(fetchMock)).toHaveLength(0);
   });
 
@@ -78,7 +111,9 @@ describe("TaskForm (app/_components/task-form)", () => {
     const long = "x".repeat(201);
     fill(f, long, "2026-12-24");
     fireEvent.click(f.submit);
-    expect(await screen.findByText("Title must be at most 200 characters")).toBeInTheDocument();
+    const msg = await screen.findByText("Title must be at most 200 characters");
+    expect(msg).toHaveAttribute("id", "task-title-error");
+    expect(f.title).toHaveAttribute("aria-describedby", "task-title-error");
     expect(f.title.value).toBe(long);
     expect(f.due.value).toBe("2026-12-24");
     expect(posts(fetchMock)).toHaveLength(0);
@@ -97,13 +132,24 @@ describe("TaskForm (app/_components/task-form)", () => {
   });
 
   it("AC-001.6 shows the task limit message on a 409 and keeps the values", async () => {
-    stubFetch(() => json(409, { detail: "task limit of 1000 reached" }));
+    stubFetch((_url, init) =>
+      init?.method === "POST" ? json(409, { detail: "task limit of 1000 reached" }) : json(200, [TASK_A, TASK_B]),
+    );
     const f = await renderForm();
     fill(f, "Buy milk", "2026-12-24");
     fireEvent.click(f.submit);
     expect(await screen.findByText("The task limit of 1000 is reached")).toBeInTheDocument();
     expect(f.title.value).toBe("Buy milk");
     expect(f.due.value).toBe("2026-12-24");
+    // The list is unchanged: the same two tasks, and no "Buy milk".
+    const { listTasks } = await load<typeof import("@/lib/tasks/api")>("@/lib/tasks/api");
+    const { TaskListView } = await load<typeof import("@/app/_components/task-list")>("@/app/_components/task-list");
+    const view = render(<TaskListView result={await listTasks()} />);
+    const items = within(view.container).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("A");
+    expect(items[1]).toHaveTextContent("B");
+    expect(view.container).not.toHaveTextContent("Buy milk");
   });
 
   it("AC-001.8 shows 'The task could not be saved. Try again.' on 503, 500 and network errors, keeping values", async () => {

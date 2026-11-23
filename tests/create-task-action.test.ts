@@ -27,6 +27,27 @@ describe("createTaskAction (app/_actions/create-task)", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 
+  it("AC-001.3 after the action, listTasks returns the new task last with its due date or null", async () => {
+    const stored = [TASK_A];
+    stubFetch((_url, init) => {
+      if (init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { title: string; due_date: string | null };
+        const task = { id: "new", created_at: "2026-11-23T11:00:00Z", ...body };
+        stored.push(task);
+        return json(201, task);
+      }
+      return json(200, stored);
+    });
+    const { createTaskAction } = await load<typeof import("@/app/_actions/create-task")>("@/app/_actions/create-task");
+    const { listTasks } = await load<typeof import("@/lib/tasks/api")>("@/lib/tasks/api");
+    await createTaskAction({ title: "Buy milk", due_date: "" });
+    const result = await listTasks();
+    expect(result.ok && result.tasks.map((t) => [t.title, t.due_date])).toEqual([
+      ["A", "2026-12-24"],
+      ["Buy milk", null],
+    ]);
+  });
+
   it("AC-001.4 re-validates on the server: no POST and the site's message for a bad title", async () => {
     const fetchMock = stubFetch(() => json(201, TASK_A));
     const { createTaskAction } = await load<typeof import("@/app/_actions/create-task")>("@/app/_actions/create-task");
