@@ -10,6 +10,7 @@ tasks:
     covers: [AC-001.4]
     parallel_safe: true
     depends_on: []
+    done: true
   - id: t2
     title: Add the server-side taskboard28-api client with timeout and outcome mapping
     files: [lib/tasks/api.ts, docs/env-vars.md]
