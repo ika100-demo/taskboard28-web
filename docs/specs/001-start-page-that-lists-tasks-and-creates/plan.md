@@ -24,12 +24,14 @@ tasks:
     covers: [AC-001.1, AC-001.2, AC-001.7]
     parallel_safe: true
     depends_on: [t2]
+    done: true
   - id: t4
     title: Add the create Server Action, the client form, its styles and the contract adapter
     files: [app/_actions/create-task.ts, app/_components/task-form.tsx, app/globals.css, tests/contract/adapter.ts]
     covers: [AC-001.3, AC-001.4, AC-001.5, AC-001.6, AC-001.8]
     parallel_safe: true
     depends_on: [t1, t2]
+    done: true
   - id: t5
     title: Replace the template start page with the task page
     files: [app/page.tsx, app/_components/feature-card.tsx, app/_components/icons.tsx, tests/page.test.tsx, e2e/home.spec.ts]
