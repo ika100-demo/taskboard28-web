@@ -1,0 +1,59 @@
+{
+  "commit": "6b9f792321ddd7531d33b19ea8b49679c5bdb9e7",
+  "errors": {
+    "body": {
+      "field": "loc",
+      "list": "detail",
+      "message": "msg",
+      "rule": "type"
+    },
+    "status": 422,
+    "unlisted": {
+      "message": "The task could not be saved. Try again."
+    }
+  },
+  "gitops_app": "ika100-demo/taskboard28-gitops",
+  "plan_id": "001-tasks-in-postgres-visible-and-creatable",
+  "repo": "taskboard28-web",
+  "rules": [
+    {
+      "consumers": [
+        "taskboard28-web"
+      ],
+      "endpoint": "POST /tasks",
+      "field": "title",
+      "id": "title-max",
+      "kind": "max_length",
+      "provider": "taskboard28-api",
+      "role": "consumer",
+      "status": 422,
+      "value": 200
+    },
+    {
+      "consumers": [
+        "taskboard28-web"
+      ],
+      "endpoint": "POST /tasks",
+      "field": "title",
+      "id": "title-min",
+      "kind": "min_length",
+      "provider": "taskboard28-api",
+      "role": "consumer",
+      "status": 422,
+      "value": 1
+    },
+    {
+      "consumers": [
+        "taskboard28-web"
+      ],
+      "endpoint": "POST /tasks",
+      "field": "title",
+      "id": "title-required",
+      "kind": "required",
+      "provider": "taskboard28-api",
+      "role": "consumer",
+      "status": 422,
+      "value": true
+    }
+  ]
+}
