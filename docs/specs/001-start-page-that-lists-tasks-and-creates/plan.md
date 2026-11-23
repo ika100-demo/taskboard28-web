@@ -17,6 +17,7 @@ tasks:
     covers: [AC-001.1, AC-001.3, AC-001.5, AC-001.6, AC-001.7, AC-001.8]
     parallel_safe: true
     depends_on: [t1]
+    done: true
   - id: t3
     title: Add the task list Server Component (list, empty, error)
     files: [app/_components/task-list.tsx]
